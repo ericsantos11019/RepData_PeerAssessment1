@@ -7,8 +7,8 @@ output:
 
 ## Initialization
 
-This step involves loading required libraries and setting the working directory, so our code will
-function properly:
+This step involves loading required libraries, setting the working directory, and making other
+adjustments so our code will function properly:
 ```{r}
 packages <- c("data.table", "ggplot2", "scales", "stringr")
 sapply(packages, require, character.only = TRUE, warn.conflicts = FALSE, quietly = TRUE)
@@ -17,21 +17,21 @@ previousWD <- getwd()
 newWD <- getSrcDirectory(function(x) {x})
 setwd(newWD)
 
-options(datatable.print.nrows=50)
+options(datatable.print.nrows = 50)
 ```
 
 ## Loading and preprocessing the data
 
 #### 1) Load the data
 
-In this assignment, we use the `data.table` package, which provides high performance functions to 
-load files and deal with tables. Since the data file is zipped, we first unzip it, then read the
+In this assignment, we use the `data.table` package, which provides high performance file loading
+and methods to process tabular data. Since the data file is zipped, we first unzip it, then read the
 data file, using the `fread()` function. Once the data is loaded, the CSV data file is deleted.
 ```{r}
-fileName <- "activity.csv"
+dataFileName <- "activity.csv"
 zipFIlename <- "activity.zip"
 dataFile <- unzip(zipFIlename)
-data <- fread(fileName)
+data <- fread(dataFileName)
 unlink(dataFile)
 print(data)
 ```
@@ -47,7 +47,7 @@ At this point, no further processing is required.
 This can be accomplished in a single line of code using the built-in `data.table` syntax.
 
 ```{r}
-stepsPerDay <- data[, .(total = sum(steps, na.rm = T)), by = .(date)]
+stepsPerDay <- data[, .(total = sum(steps, na.rm = TRUE)), by = .(date)]
 print(stepsPerDay)
 ```
 
@@ -57,9 +57,10 @@ For all graphics in this report, we'll use the `ggplot2` package.
 
 ```{r, fig.align='center'}
 g <- ggplot(stepsPerDay, aes(total)) + 
-  geom_histogram(fill = "#5588BB", color = "#336699", size = 1, binwidth = 1000) + 
+  geom_histogram(fill = "#5588BB", color = "#336699", size = 0.8, binwidth = 1000) + 
   labs(x = "Steps Taken per Day", y = "Number of Days", title = "Histogram for Steps Taken per Day") + 
-  scale_x_continuous(breaks = seq(0, 22000, 2000))
+  scale_x_continuous(breaks = seq(0, 22000, 2000)) + 
+  scale_y_continuous(breaks = seq(0, 10, 2))
 print(g)
 ```
 
@@ -73,32 +74,34 @@ print(meanMedian)
 
 ## What is the average daily activity pattern?
 
-#### 1) Make a time series plot f the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+#### 1) Make a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
-First, we must calculate the average steps for each 5-minute interval, across all days in the dataset.
-Note that we create a new column in the calculation data table with the time interval padded with
-leading zeros. Therefore, strings like `105` become `0105`. The reason for this transformation
-will become obvious in the next step:
+First, we must calculate the average number of steps for each 5-minute interval, across all days in the dataset.
+Note that we create a new column in the result data table with the time interval padded with
+leading zeros. Therefore, strings like `10` become `0010`. We do that using the `str_pad()` function
+in the `stringr` package. The reason for this transformation will become clear in the next step:
 ```{r}
-avgFiveMinuteInt <- data[, .(mean = mean(steps, na.rm = T), time = str_pad(interval, 4, pad = "0")), 
+avgFiveMinuteInt <- data[, .(mean = mean(steps, na.rm = TRUE), time = str_pad(interval, 4, pad = "0")), 
                          by = .(interval)]
 print(avgFiveMinuteInt)
 ```
 
-In order to present the x-axis scale in the plot in a more meaningful way (i.e. in the `%H:%M` format),
-we calculate an auxiliary character that takes the padded time interval strings and gererates
-Date/Time objects from them (note the date is not important. We are only interested in the time):
+In order to present the plot x-axis scale in a more meaningful way (i.e. in the `%hh:%mm` format),
+we calculate an auxiliary character vector that takes the padded time interval strings from the 
+`avgFiveMinuteInt` table and gererates Date/Time objects from them (note the date is not important. 
+We are only interested in the time, but the `timeVector` is of class `POSIXlt`, so both date and time
+are shown):
 ```{r}
 timeVector <- as.data.table(strptime(avgFiveMinuteInt$time, "%H%M"))
 print(timeVector)
 ```
 
-Finally, we can then plot the data series, using the `timeVector` as labels for the x-axis:
+Finally, we can plot the data series, using the `timeVector` as labels for the x-axis, after proper
+formatting with the `date_format()` function of the `scales` package:
 ```{r, fig.align='center'}
 g <- ggplot(avgFiveMinuteInt, aes(timeVector, mean)) + 
-  geom_line(size = 1.1) + 
-  labs(x = "Time", y = "Average Steps Taken", 
-       title = "Average Steps Taken per 5-minute Intervals") + 
+  geom_line(size = 1) + 
+  labs(x = "Time", y = "Average Steps Taken", title = "Average Steps Taken per 5-minute Intervals") + 
   scale_x_datetime(labels=date_format("%H:%M", tz = Sys.timezone()))
 print(g)
 ```
@@ -122,8 +125,8 @@ print(numNAs)
 #### 2) Devise a strategy for filling in all of the missing values in the dataset.
 
 In my analysis, the imputing strategy for `NA` values consisted of using the mean value for that
-particular 5-minute interval. One efficient way of doing this is merging the `data` and the
-`avgFiveMinuteInt` data tables to create one bigger data table with separate columns for the actual
+particular 5-minute interval across all days. One efficient way of doing this is merging the `data` and the
+`avgFiveMinuteInt` tables to create one bigger data table with separate columns for the actual
 number of steps taken in each 5-minute interval and the mean for that same interval. This is done
 using the `data.table` join syntax.
 
@@ -131,6 +134,7 @@ using the `data.table` join syntax.
 setkey(data, interval)
 setkey(avgFiveMinuteInt, interval)
 filledData <- data[avgFiveMinuteInt]
+print(filledData)
 ```
 
 #### 3) Create a new dataset that is equal to the original dataset but with the missing data filled in.
@@ -149,7 +153,7 @@ filledData[is.na(steps), steps := mean]
 ```
 
 To make the final data a little bit cleaner, we then remove the `mean` column and sort the new table
-on the `date` column:
+across the `date` column:
 
 ```{r}
 filledData <- filledData[, .(steps, date, interval)]
@@ -157,10 +161,15 @@ setkey(filledData, date)
 print(filledData)
 ```
 
+We can see the new table has no remaining `NA` values:
+```{r}
+sum(is.na(filledData))
+```
+
 #### 4) Make a histogram of the total number of steps taken each day and calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
 
-In order to differentiate from the preivou calculated values, we'll add a suffix to the values
-calculated in this step. The calculation is otherwise the same as done before, but using the
+In order to differentiate from the preivous calculated values, we'll add a common suffix to the values
+calculated in this step. The calculation process is otherwise the same as done before, but using the
 `filledDate` vector instead.
 
 ```{r, fig.align='center'}
@@ -168,16 +177,17 @@ stepsPerDay2 <- filledData[, .(total = sum(steps, na.rm = T)), by = .(date)]
 print(stepsPerDay2)
 
 g <- ggplot(stepsPerDay2, aes(total)) + 
-  geom_histogram(fill = "#5588BB", color = "#336699", size = 1, binwidth = 1000) + 
+  geom_histogram(fill = "#5588BB", color = "#336699", size = 0.8, binwidth = 1000) + 
   labs(x = "Steps Taken per Day", y = "Number of Days", title = "Histogram for Steps Taken per Day") + 
-  scale_x_continuous(breaks = seq(0, 22000, 2000))
+  scale_x_continuous(breaks = seq(0, 22000, 2000)) + 
+  scale_y_continuous(breaks = seq(0, 18, 2))
 print(g)
 
 meanMedian2 <- stepsPerDay2[, .(mean = mean(total), median = median(total))]
 print(meanMedian2)
 ```
 
-As we can see, the values do differ from the preivously calculated values. The immediate effect of 
+As we can see, the values do differ from the preivously calculated ones. The immediate effect of 
 imputing the missing values is to make the mean and median the same.
 
 ## Are there differences in activity patterns between weekdays and weekends?
@@ -212,10 +222,10 @@ timeVector2 <- as.data.table(strptime(avgFiveMinuteInt2$time, "%H%M"))
 print(timeVector2)
 ```
 
-Finally, we create the panel plot, using the Date/Time vector as labels for the x-axis:
+Finally, we create the panel plot as explained before:
 ```{r, fig.align='center'}
 g <- ggplot(avgFiveMinuteInt2, aes(timeVector2, mean)) + 
-  geom_line(size = 1.1) + 
+  geom_line(size = 1) + 
   labs(x = "Time", y = "Average Steps Taken", 
        title = "Average Steps Taken per 5-minute Intervals") +
   facet_grid(weekday ~ .) + 
@@ -223,4 +233,9 @@ g <- ggplot(avgFiveMinuteInt2, aes(timeVector2, mean)) +
 print(g)
 ```
 
+Finally, now that all processing is done, we set the working directory back to what it was at the
+beginning of the analysis.
+```{r}
+setwd(previousWD)
+```
 
