@@ -6,13 +6,13 @@ This step involves loading required libraries, setting the working directory, an
 adjustments so our code will function properly:
 
 ```r
-packages <- c("data.table", "ggplot2", "scales", "stringr")
+packages <- c("data.table", "ggplot2", "scales")
 sapply(packages, require, character.only = TRUE, warn.conflicts = FALSE, quietly = TRUE)
 ```
 
 ```
-## data.table    ggplot2     scales    stringr 
-##       TRUE       TRUE       TRUE       TRUE
+## data.table    ggplot2     scales 
+##       TRUE       TRUE       TRUE
 ```
 
 ```r
@@ -121,9 +121,6 @@ print(meanMedian)
 #### 1) Make a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
 First, we must calculate the average number of steps for each 5-minute interval, across all days in the dataset.
-Note that we create a new column in the result data table with the time interval padded with
-leading zeros. Therefore, strings like `10` become `0010`. We do that using the `str_pad()` function
-in the `stringr` package. The reason for this transformation will become clear in the next step:
 
 ```r
 avgFiveMinuteInt <- data[, .(mean = mean(steps, na.rm = TRUE)), by = .(interval)]
@@ -145,8 +142,8 @@ print(avgFiveMinuteInt)
 ## 288:     2355 1.0754717
 ```
 
-In order to present the plot x-axis scale in a more meaningful way (i.e. in the `%hh:%mm` format),
-we calculate an auxiliary character vector that takes the padded time interval strings from the 
+In order to present the plot x-axis scale in a more meaningful way (i.e. in the `hh:mm` format),
+we calculate an auxiliary character vector that takes a 4-digit representation of the interval strings from the 
 `avgFiveMinuteInt` table and gererates Date/Time objects from them (note the date is not important. 
 We are only interested in the time, but the `timeVector` is of class `POSIXlt`, so both date and time
 are shown):
