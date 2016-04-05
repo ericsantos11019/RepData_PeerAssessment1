@@ -126,24 +126,23 @@ leading zeros. Therefore, strings like `10` become `0010`. We do that using the 
 in the `stringr` package. The reason for this transformation will become clear in the next step:
 
 ```r
-avgFiveMinuteInt <- data[, .(mean = mean(steps, na.rm = TRUE), time = str_pad(interval, 4, pad = "0")), 
-                         by = .(interval)]
+avgFiveMinuteInt <- data[, .(mean = mean(steps, na.rm = TRUE)), by = .(interval)]
 print(avgFiveMinuteInt)
 ```
 
 ```
-##      interval      mean time
-##   1:        0 1.7169811 0000
-##   2:        5 0.3396226 0005
-##   3:       10 0.1320755 0010
-##   4:       15 0.1509434 0015
-##   5:       20 0.0754717 0020
-##  ---                        
-## 284:     2335 4.6981132 2335
-## 285:     2340 3.3018868 2340
-## 286:     2345 0.6415094 2345
-## 287:     2350 0.2264151 2350
-## 288:     2355 1.0754717 2355
+##      interval      mean
+##   1:        0 1.7169811
+##   2:        5 0.3396226
+##   3:       10 0.1320755
+##   4:       15 0.1509434
+##   5:       20 0.0754717
+##  ---                   
+## 284:     2335 4.6981132
+## 285:     2340 3.3018868
+## 286:     2345 0.6415094
+## 287:     2350 0.2264151
+## 288:     2355 1.0754717
 ```
 
 In order to present the plot x-axis scale in a more meaningful way (i.e. in the `%hh:%mm` format),
@@ -153,23 +152,23 @@ We are only interested in the time, but the `timeVector` is of class `POSIXlt`, 
 are shown):
 
 ```r
-timeVector <- as.data.table(strptime(avgFiveMinuteInt$time, "%H%M"))
+timeVector <- as.data.table(strptime(sprintf("%04d", avgFiveMinuteInt$interval), "%H%M"))
 print(timeVector)
 ```
 
 ```
 ##                        x
-##   1: 2016-04-03 00:00:00
-##   2: 2016-04-03 00:05:00
-##   3: 2016-04-03 00:10:00
-##   4: 2016-04-03 00:15:00
-##   5: 2016-04-03 00:20:00
+##   1: 2016-04-04 00:00:00
+##   2: 2016-04-04 00:05:00
+##   3: 2016-04-04 00:10:00
+##   4: 2016-04-04 00:15:00
+##   5: 2016-04-04 00:20:00
 ##  ---                    
-## 284: 2016-04-03 23:35:00
-## 285: 2016-04-03 23:40:00
-## 286: 2016-04-03 23:45:00
-## 287: 2016-04-03 23:50:00
-## 288: 2016-04-03 23:55:00
+## 284: 2016-04-04 23:35:00
+## 285: 2016-04-04 23:40:00
+## 286: 2016-04-04 23:45:00
+## 287: 2016-04-04 23:50:00
+## 288: 2016-04-04 23:55:00
 ```
 
 Finally, we can plot the data series, using the `timeVector` as labels for the x-axis, after proper
@@ -229,18 +228,18 @@ print(filledData)
 ```
 
 ```
-##        steps       date interval     mean time
-##     1:    NA 2012-10-01        0 1.716981 0000
-##     2:     0 2012-10-02        0 1.716981 0000
-##     3:     0 2012-10-03        0 1.716981 0000
-##     4:    47 2012-10-04        0 1.716981 0000
-##     5:     0 2012-10-05        0 1.716981 0000
-##    ---                                        
-## 17564:     0 2012-11-26     2355 1.075472 2355
-## 17565:     0 2012-11-27     2355 1.075472 2355
-## 17566:     0 2012-11-28     2355 1.075472 2355
-## 17567:     0 2012-11-29     2355 1.075472 2355
-## 17568:    NA 2012-11-30     2355 1.075472 2355
+##        steps       date interval     mean
+##     1:    NA 2012-10-01        0 1.716981
+##     2:     0 2012-10-02        0 1.716981
+##     3:     0 2012-10-03        0 1.716981
+##     4:    47 2012-10-04        0 1.716981
+##     5:     0 2012-10-05        0 1.716981
+##    ---                                   
+## 17564:     0 2012-11-26     2355 1.075472
+## 17565:     0 2012-11-27     2355 1.075472
+## 17566:     0 2012-11-28     2355 1.075472
+## 17567:     0 2012-11-29     2355 1.075472
+## 17568:    NA 2012-11-30     2355 1.075472
 ```
 
 #### 3) Create a new dataset that is equal to the original dataset but with the missing data filled in.
@@ -390,47 +389,46 @@ grouped by the `weekday` column.
 
 
 ```r
-avgFiveMinuteInt2 <- filledData[, .(mean = mean(steps, na.rm = T), time = str_pad(interval, 4, pad = "0")), 
-                         by = .(interval, weekday)]
+avgFiveMinuteInt2 <- filledData[, .(mean = mean(steps, na.rm = T)), by = .(interval, weekday)]
 print(avgFiveMinuteInt2)
 ```
 
 ```
-##      interval weekday        mean time
-##   1:        0 Weekday  2.25115304 0000
-##   2:        5 Weekday  0.44528302 0005
-##   3:       10 Weekday  0.17316562 0010
-##   4:       15 Weekday  0.19790356 0015
-##   5:       20 Weekday  0.09895178 0020
-##  ---                                  
-## 572:     2335 Weekend 11.58726415 2335
-## 573:     2340 Weekend  6.28773585 2340
-## 574:     2345 Weekend  1.70518868 2345
-## 575:     2350 Weekend  0.02830189 2350
-## 576:     2355 Weekend  0.13443396 2355
+##      interval weekday        mean
+##   1:        0 Weekday  2.25115304
+##   2:        5 Weekday  0.44528302
+##   3:       10 Weekday  0.17316562
+##   4:       15 Weekday  0.19790356
+##   5:       20 Weekday  0.09895178
+##  ---                             
+## 572:     2335 Weekend 11.58726415
+## 573:     2340 Weekend  6.28773585
+## 574:     2345 Weekend  1.70518868
+## 575:     2350 Weekend  0.02830189
+## 576:     2355 Weekend  0.13443396
 ```
 
 Now, we use the same strategy as before to calculate a helper vector of Date/Time values to be used
 as x-axis labels:
 
 ```r
-timeVector2 <- as.data.table(strptime(avgFiveMinuteInt2$time, "%H%M"))
+timeVector2 <- as.data.table(strptime(sprintf("%04d", avgFiveMinuteInt2$interval), "%H%M"))
 print(timeVector2)
 ```
 
 ```
 ##                        x
-##   1: 2016-04-03 00:00:00
-##   2: 2016-04-03 00:05:00
-##   3: 2016-04-03 00:10:00
-##   4: 2016-04-03 00:15:00
-##   5: 2016-04-03 00:20:00
+##   1: 2016-04-04 00:00:00
+##   2: 2016-04-04 00:05:00
+##   3: 2016-04-04 00:10:00
+##   4: 2016-04-04 00:15:00
+##   5: 2016-04-04 00:20:00
 ##  ---                    
-## 572: 2016-04-03 23:35:00
-## 573: 2016-04-03 23:40:00
-## 574: 2016-04-03 23:45:00
-## 575: 2016-04-03 23:50:00
-## 576: 2016-04-03 23:55:00
+## 572: 2016-04-04 23:35:00
+## 573: 2016-04-04 23:40:00
+## 574: 2016-04-04 23:45:00
+## 575: 2016-04-04 23:50:00
+## 576: 2016-04-04 23:55:00
 ```
 
 Finally, we create the panel plot as explained before:

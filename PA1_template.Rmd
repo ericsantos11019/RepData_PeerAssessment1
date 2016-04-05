@@ -81,8 +81,7 @@ Note that we create a new column in the result data table with the time interval
 leading zeros. Therefore, strings like `10` become `0010`. We do that using the `str_pad()` function
 in the `stringr` package. The reason for this transformation will become clear in the next step:
 ```{r}
-avgFiveMinuteInt <- data[, .(mean = mean(steps, na.rm = TRUE), time = str_pad(interval, 4, pad = "0")), 
-                         by = .(interval)]
+avgFiveMinuteInt <- data[, .(mean = mean(steps, na.rm = TRUE)), by = .(interval)]
 print(avgFiveMinuteInt)
 ```
 
@@ -92,7 +91,7 @@ we calculate an auxiliary character vector that takes the padded time interval s
 We are only interested in the time, but the `timeVector` is of class `POSIXlt`, so both date and time
 are shown):
 ```{r}
-timeVector <- as.data.table(strptime(avgFiveMinuteInt$time, "%H%M"))
+timeVector <- as.data.table(strptime(sprintf("%04d", avgFiveMinuteInt$interval), "%H%M"))
 print(timeVector)
 ```
 
@@ -210,15 +209,14 @@ First, we must calculate the new means for every 5-minute interval, using the im
 grouped by the `weekday` column.
 
 ```{r}
-avgFiveMinuteInt2 <- filledData[, .(mean = mean(steps, na.rm = T), time = str_pad(interval, 4, pad = "0")), 
-                         by = .(interval, weekday)]
+avgFiveMinuteInt2 <- filledData[, .(mean = mean(steps, na.rm = T)), by = .(interval, weekday)]
 print(avgFiveMinuteInt2)
 ```
 
 Now, we use the same strategy as before to calculate a helper vector of Date/Time values to be used
 as x-axis labels:
 ```{r}
-timeVector2 <- as.data.table(strptime(avgFiveMinuteInt2$time, "%H%M"))
+timeVector2 <- as.data.table(strptime(sprintf("%04d", avgFiveMinuteInt2$interval), "%H%M"))
 print(timeVector2)
 ```
 

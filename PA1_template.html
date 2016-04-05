@@ -199,36 +199,35 @@ print(meanMedian)</code></pre>
 <div id="make-a-time-series-plot-of-the-5-minute-interval-x-axis-and-the-average-number-of-steps-taken-averaged-across-all-days-y-axis" class="section level4">
 <h4>1) Make a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)</h4>
 <p>First, we must calculate the average number of steps for each 5-minute interval, across all days in the dataset. Note that we create a new column in the result data table with the time interval padded with leading zeros. Therefore, strings like <code>10</code> become <code>0010</code>. We do that using the <code>str_pad()</code> function in the <code>stringr</code> package. The reason for this transformation will become clear in the next step:</p>
-<pre class="r"><code>avgFiveMinuteInt &lt;- data[, .(mean = mean(steps, na.rm = TRUE), time = str_pad(interval, 4, pad = &quot;0&quot;)), 
-                         by = .(interval)]
+<pre class="r"><code>avgFiveMinuteInt &lt;- data[, .(mean = mean(steps, na.rm = TRUE)), by = .(interval)]
 print(avgFiveMinuteInt)</code></pre>
-<pre><code>##      interval      mean time
-##   1:        0 1.7169811 0000
-##   2:        5 0.3396226 0005
-##   3:       10 0.1320755 0010
-##   4:       15 0.1509434 0015
-##   5:       20 0.0754717 0020
-##  ---                        
-## 284:     2335 4.6981132 2335
-## 285:     2340 3.3018868 2340
-## 286:     2345 0.6415094 2345
-## 287:     2350 0.2264151 2350
-## 288:     2355 1.0754717 2355</code></pre>
+<pre><code>##      interval      mean
+##   1:        0 1.7169811
+##   2:        5 0.3396226
+##   3:       10 0.1320755
+##   4:       15 0.1509434
+##   5:       20 0.0754717
+##  ---                   
+## 284:     2335 4.6981132
+## 285:     2340 3.3018868
+## 286:     2345 0.6415094
+## 287:     2350 0.2264151
+## 288:     2355 1.0754717</code></pre>
 <p>In order to present the plot x-axis scale in a more meaningful way (i.e. in the <code>%hh:%mm</code> format), we calculate an auxiliary character vector that takes the padded time interval strings from the <code>avgFiveMinuteInt</code> table and gererates Date/Time objects from them (note the date is not important. We are only interested in the time, but the <code>timeVector</code> is of class <code>POSIXlt</code>, so both date and time are shown):</p>
-<pre class="r"><code>timeVector &lt;- as.data.table(strptime(avgFiveMinuteInt$time, &quot;%H%M&quot;))
+<pre class="r"><code>timeVector &lt;- as.data.table(strptime(sprintf(&quot;%04d&quot;, avgFiveMinuteInt$interval), &quot;%H%M&quot;))
 print(timeVector)</code></pre>
 <pre><code>##                        x
-##   1: 2016-04-03 00:00:00
-##   2: 2016-04-03 00:05:00
-##   3: 2016-04-03 00:10:00
-##   4: 2016-04-03 00:15:00
-##   5: 2016-04-03 00:20:00
+##   1: 2016-04-04 00:00:00
+##   2: 2016-04-04 00:05:00
+##   3: 2016-04-04 00:10:00
+##   4: 2016-04-04 00:15:00
+##   5: 2016-04-04 00:20:00
 ##  ---                    
-## 284: 2016-04-03 23:35:00
-## 285: 2016-04-03 23:40:00
-## 286: 2016-04-03 23:45:00
-## 287: 2016-04-03 23:50:00
-## 288: 2016-04-03 23:55:00</code></pre>
+## 284: 2016-04-04 23:35:00
+## 285: 2016-04-04 23:40:00
+## 286: 2016-04-04 23:45:00
+## 287: 2016-04-04 23:50:00
+## 288: 2016-04-04 23:55:00</code></pre>
 <p>Finally, we can plot the data series, using the <code>timeVector</code> as labels for the x-axis, after proper formatting with the <code>date_format()</code> function of the <code>scales</code> package:</p>
 <pre class="r"><code>g &lt;- ggplot(avgFiveMinuteInt, aes(timeVector, mean)) + 
   geom_line(size = 1) + 
@@ -260,18 +259,18 @@ print(numNAs)</code></pre>
 setkey(avgFiveMinuteInt, interval)
 filledData &lt;- data[avgFiveMinuteInt]
 print(filledData)</code></pre>
-<pre><code>##        steps       date interval     mean time
-##     1:    NA 2012-10-01        0 1.716981 0000
-##     2:     0 2012-10-02        0 1.716981 0000
-##     3:     0 2012-10-03        0 1.716981 0000
-##     4:    47 2012-10-04        0 1.716981 0000
-##     5:     0 2012-10-05        0 1.716981 0000
-##    ---                                        
-## 17564:     0 2012-11-26     2355 1.075472 2355
-## 17565:     0 2012-11-27     2355 1.075472 2355
-## 17566:     0 2012-11-28     2355 1.075472 2355
-## 17567:     0 2012-11-29     2355 1.075472 2355
-## 17568:    NA 2012-11-30     2355 1.075472 2355</code></pre>
+<pre><code>##        steps       date interval     mean
+##     1:    NA 2012-10-01        0 1.716981
+##     2:     0 2012-10-02        0 1.716981
+##     3:     0 2012-10-03        0 1.716981
+##     4:    47 2012-10-04        0 1.716981
+##     5:     0 2012-10-05        0 1.716981
+##    ---                                   
+## 17564:     0 2012-11-26     2355 1.075472
+## 17565:     0 2012-11-27     2355 1.075472
+## 17566:     0 2012-11-28     2355 1.075472
+## 17567:     0 2012-11-29     2355 1.075472
+## 17568:    NA 2012-11-30     2355 1.075472</code></pre>
 </div>
 <div id="create-a-new-dataset-that-is-equal-to-the-original-dataset-but-with-the-missing-data-filled-in." class="section level4">
 <h4>3) Create a new dataset that is equal to the original dataset but with the missing data filled in.</h4>
@@ -356,36 +355,35 @@ print(filledData)</code></pre>
 <div id="make-a-panel-plot-containing-a-time-series-plot-of-the-5-minute-interval-x-axis-and-the-average-number-of-steps-taken-averaged-across-all-weekday-days-or-weekend-days-y-axis." class="section level4">
 <h4>2) Make a panel plot containing a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).</h4>
 <p>First, we must calculate the new means for every 5-minute interval, using the imputed data and grouped by the <code>weekday</code> column.</p>
-<pre class="r"><code>avgFiveMinuteInt2 &lt;- filledData[, .(mean = mean(steps, na.rm = T), time = str_pad(interval, 4, pad = &quot;0&quot;)), 
-                         by = .(interval, weekday)]
+<pre class="r"><code>avgFiveMinuteInt2 &lt;- filledData[, .(mean = mean(steps, na.rm = T)), by = .(interval, weekday)]
 print(avgFiveMinuteInt2)</code></pre>
-<pre><code>##      interval weekday        mean time
-##   1:        0 Weekday  2.25115304 0000
-##   2:        5 Weekday  0.44528302 0005
-##   3:       10 Weekday  0.17316562 0010
-##   4:       15 Weekday  0.19790356 0015
-##   5:       20 Weekday  0.09895178 0020
-##  ---                                  
-## 572:     2335 Weekend 11.58726415 2335
-## 573:     2340 Weekend  6.28773585 2340
-## 574:     2345 Weekend  1.70518868 2345
-## 575:     2350 Weekend  0.02830189 2350
-## 576:     2355 Weekend  0.13443396 2355</code></pre>
+<pre><code>##      interval weekday        mean
+##   1:        0 Weekday  2.25115304
+##   2:        5 Weekday  0.44528302
+##   3:       10 Weekday  0.17316562
+##   4:       15 Weekday  0.19790356
+##   5:       20 Weekday  0.09895178
+##  ---                             
+## 572:     2335 Weekend 11.58726415
+## 573:     2340 Weekend  6.28773585
+## 574:     2345 Weekend  1.70518868
+## 575:     2350 Weekend  0.02830189
+## 576:     2355 Weekend  0.13443396</code></pre>
 <p>Now, we use the same strategy as before to calculate a helper vector of Date/Time values to be used as x-axis labels:</p>
-<pre class="r"><code>timeVector2 &lt;- as.data.table(strptime(avgFiveMinuteInt2$time, &quot;%H%M&quot;))
+<pre class="r"><code>timeVector2 &lt;- as.data.table(strptime(sprintf(&quot;%04d&quot;, avgFiveMinuteInt2$interval), &quot;%H%M&quot;))
 print(timeVector2)</code></pre>
 <pre><code>##                        x
-##   1: 2016-04-03 00:00:00
-##   2: 2016-04-03 00:05:00
-##   3: 2016-04-03 00:10:00
-##   4: 2016-04-03 00:15:00
-##   5: 2016-04-03 00:20:00
+##   1: 2016-04-04 00:00:00
+##   2: 2016-04-04 00:05:00
+##   3: 2016-04-04 00:10:00
+##   4: 2016-04-04 00:15:00
+##   5: 2016-04-04 00:20:00
 ##  ---                    
-## 572: 2016-04-03 23:35:00
-## 573: 2016-04-03 23:40:00
-## 574: 2016-04-03 23:45:00
-## 575: 2016-04-03 23:50:00
-## 576: 2016-04-03 23:55:00</code></pre>
+## 572: 2016-04-04 23:35:00
+## 573: 2016-04-04 23:40:00
+## 574: 2016-04-04 23:45:00
+## 575: 2016-04-04 23:50:00
+## 576: 2016-04-04 23:55:00</code></pre>
 <p>Finally, we create the panel plot as explained before:</p>
 <pre class="r"><code>g &lt;- ggplot(avgFiveMinuteInt2, aes(timeVector2, mean)) + 
   geom_line(size = 1) + 
